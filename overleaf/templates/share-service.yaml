@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: sharelatex
+  namespace: ursa
+  {{if eq .Values.env "develop"}}
+  namespace: overleaf-develop
+  {{else if eq .Values.env "staging"}}
+  namespace: overleaf-staging
+  {{else}}
+  namespace: overleaf
+  {{end}}
+  labels:
+    app: sharelatex
+    tier: frontend
+spec:
+  ports:
+  - port: {{.Values.develop.shareServicePort}}
+    protocol: TCP
+  selector:
+    app: sharelatex
+    tier: frontend

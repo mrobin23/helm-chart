@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  {{if eq .Values.env "develop"}}
+  namespace: overleaf-develop
+  {{else if eq .Values.env "staging"}}
+  namespace: overleaf-staging
+  {{else}}
+  namespace: overleaf
+  {{end}}
+  labels:
+    app.kubernetes.io/name: mongo
+    app.kubernetes.io/component: backend
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mongo
+      app.kubernetes.io/component: backend
+  replicas: {{.Values.develop.mongoReplicas}}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mongo
+        app.kubernetes.io/component: backend
+    spec:
+      containers:
+      - name: mongo
+        image: {{.Values.develop.mongoImage}}
+        volumeMounts:
+        - mountPath: "{{.Values.develop.mongoMountPath}}"
+          name: mongo-volume
+        args:
+          - --bind_ip
+          - 0.0.0.0
+        resources:
+        ports:
+        - containerPort: {{.Values.develop.mongoContainerPort}}
+      volumes:
+        - name: mongo-volume
+          persistentVolumeClaim:
+  {{if eq .Values.env "develop"}}
+            claimName: mongo-pvc-develop
+  {{else if eq .Values.env "staging"}}
+            claimName: mongo-pvc-staging
+  {{else}}
+            claimName: mongo-pvc
+  {{end}}

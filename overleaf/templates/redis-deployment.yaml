@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-leader
+  {{if eq .Values.env "develop"}}
+  namespace: overleaf-develop
+  {{else if eq .Values.env "staging"}}
+  namespace: overleaf-staging
+  {{else}}
+  namespace: overleaf
+  {{end}}
+  labels:
+    app: redis
+    role: leader
+    tier: backend
+spec:
+  replicas: {{.Values.develop.redisReplicas}}
+  selector:
+    matchLabels:
+      app: redis
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: leader
+        tier: backend
+    spec:
+      containers:
+      - name: leader
+        image: {{.Values.develop.redisImage}}
+        volumeMounts:
+        - mountPath: "{{.Values.develop.redisMountPath}}"
+          name: redis-volume
+        resources:
+          requests:
+            cpu: {{.Values.develop.redisCPU}}
+            memory: {{.Values.develop.redisMemory}}
+        ports:
+        - containerPort: {{.Values.develop.redisContainerPort}}
+      volumes:
+        - name: redis-volume
+          persistentVolumeClaim:
+  {{if eq .Values.env "develop"}}
+            claimName: redis-pvc-develop
+  {{else if eq .Values.env "staging"}}
+            claimName: redis-pvc-staging
+  {{else}}
+            claimName: redis-pvc
+  {{end}}
+

@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sharelatex
+  {{if eq .Values.env "develop"}}
+  namespace: overleaf-develop
+  {{else if eq .Values.env "staging"}}
+  namespace: overleaf-staging
+  {{else}}
+  namespace: overleaf
+  {{end}}
+spec:
+  replicas: {{.Values.develop.shareReplicas}}
+  selector:
+    matchLabels:
+      app: sharelatex
+      tier: frontend
+  template:
+    metadata:
+      labels:
+        app: sharelatex
+        tier: frontend
+    spec:
+      containers:
+      - name: sharelatex
+        image: {{.Values.develop.shareImage}}
+        volumeMounts:
+        - mountPath: "{{.Values.develop.shareMountPath}}"
+          name: share-volume
+        envFrom:
+          - configMapRef:
+              name: share-configmap
+        ports:
+        - containerPort: {{.Values.develop.shareContainerPort}}
+          #        - containerPort: 443
+      volumes:
+        - name: share-volume
+          persistentVolumeClaim:
+  {{if eq .Values.env "develop"}}
+            claimName: share-pvc-develop
+  {{else if eq .Values.env "staging"}}
+            claimName: share-pvc-staging
+  {{else}}
+            claimName: share-pvc
+  {{end}}
+
